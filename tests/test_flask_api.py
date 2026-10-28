@@ -1,0 +1,79 @@
+import pytest
+
+from flask_app import app as flask_module
+
+
+@pytest.fixture()
+def client(monkeypatch):
+    app = flask_module.app
+    app.config.update(TESTING=True)
+
+    monkeypatch.setattr(flask_module, "list_parts", lambda: [
+        {"id": 1, "name": "Marine Pump", "sku": "PUMP-001",
+         "quantity": 10, "price": 249.99}
+    ])
+    monkeypatch.setattr(flask_module, "get_part", lambda part_id: (
+        {"id": part_id, "name": "Marine Pump", "sku": "PUMP-001",
+         "quantity": 10, "price": 249.99} if part_id == 1 else None
+    ))
+    monkeypatch.setattr(flask_module, "create_part", lambda data: {
+        "id": 2, **data
+    })
+    monkeypatch.setattr(flask_module, "update_part", lambda part_id, data: (
+        {"id": part_id, **data} if part_id == 1 else None
+    ))
+    monkeypatch.setattr(flask_module, "delete_part", lambda part_id: part_id == 1)
+
+    with app.test_client() as test_client:
+        yield test_client
+
+
+def valid_part():
+    return {
+        "name": "Marine Pump",
+        "sku": "PUMP-001",
+        "quantity": 10,
+        "price": 249.99,
+    }
+
+
+def test_list_parts_returns_200_and_json(client):
+    response = client.get("/parts")
+    assert response.status_code == 200
+    assert response.json[0]["sku"] == "PUMP-001"
+
+
+def test_get_missing_part_returns_404(client):
+    response = client.get("/parts/99")
+    assert response.status_code == 404
+    assert response.json["error"] == "Part not found"
+
+
+def test_create_part_returns_201(client):
+    response = client.post("/parts", json=valid_part())
+    assert response.status_code == 201
+    assert response.json["id"] == 2
+
+
+def test_create_part_rejects_invalid_quantity(client):
+    payload = valid_part()
+    payload["quantity"] = -1
+    response = client.post("/parts", json=payload)
+    assert response.status_code == 400
+    assert "quantity" in response.json["error"]
+
+
+def test_update_missing_part_returns_404(client):
+    response = client.put("/parts/99", json=valid_part())
+    assert response.status_code == 404
+
+
+def test_delete_part_returns_204(client):
+    response = client.delete("/parts/1")
+    assert response.status_code == 204
+    assert response.data == b""
+
+
+def test_delete_missing_part_returns_404(client):
+    response = client.delete("/parts/99")
+    assert response.status_code == 404
