@@ -186,11 +186,6 @@ The framework changes, but the core backend concepts are the same: HTTP, input v
 - **Named volume:** `mysql_data` keeps MySQL data when containers are removed.
 - **Health check:** Compose waits for MySQL to be ready before starting the APIs.
 
-## 10. Interview explanation (honest version)
-
-“I built a small marine-parts inventory REST API twice, once with Flask and once with FastAPI, using MySQL for persistence. Both implementations share the database layer, so I could compare the frameworks while keeping the SQL logic consistent. The API supports CRUD operations, uses parameterized queries, handles missing records and duplicate SKUs, and returns appropriate HTTP status codes. I used Docker Compose to run MySQL and both API services together. My professional backend experience is primarily in Node.js and Express, so I approached this by transferring familiar API and database concepts into Python.”
-
-Only describe it as completed after you have run it and understand the code. Be ready to explain the request flow and why the implementations differ.
 
 ## 11. Local run without Docker (optional)
 
